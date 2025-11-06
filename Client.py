@@ -3,9 +3,6 @@ from pickle import dumps
 
 import os
 
-# client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# client.connect(('127.0.0.1', 8500))
-
 class SocketClient:
 
     def __init__(self, serverIpAddress = '127.0.0.1', serverSocketPortNumber = 8500):
@@ -69,40 +66,6 @@ class SocketClient:
 
         self.client.close()
 
-
-
-
-# with open('architecture.png', 'rb') as file:
-#     data = {
-#         'IsFile': True,
-#         'FileName': file.name,
-#         'FileSize': os.fstat(file.fileno()).st_size
-#     }
-#
-#     serializedData = dumps(data)
-#     client.send(serializedData)
-#
-#     ACK_DATA = client.recv(1024).decode()
-#
-#     print("DATA:")
-#     print(ACK_DATA)
-#     print('>>END DTATA.')
-#
-#     if ACK_DATA != 'ok':
-#         client.close()
-#         exit()
-#
-#     while True:
-#         send_data = file.read(1024)
-#         if not send_data:
-#             break
-#         client.sendall(send_data)
-#
-#     print('Data Sended')
-#
-# client.close()
-
 TestClient = SocketClient()
 TestClient.server_communicate_TCP_IPV4()
-# TestClient.send_message('Hello Farhan How are you?')
 TestClient.send_file(fileName='architecture.png', message='Here you are')
