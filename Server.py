@@ -1,4 +1,5 @@
 import socket
+import threading
 from threading import Thread
 
 from pickle import loads
@@ -9,6 +10,9 @@ class SocketServer:
         self.serverIpAddress = serverIpAddress
         self.serverSocketPortNumber = serverSocketPortNumber
 
+        self.clients: dict = {}
+        self.lock = threading.Lock()
+
     def start_server_TCP_IPV4(self):
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.bind((self.serverIpAddress, self.serverSocketPortNumber))
@@ -16,7 +20,9 @@ class SocketServer:
 
         while True:
             self.connection, self.address = self.server.accept()
-            Thread(target=self.handler_server_clients, args=(self.connection, self.address)).start()
+
+            if self.server_client_connection_registrar(self.connection):
+                Thread(target=self.handler_server_clients, args=(self.connection, self.address)).start()
 
     def start_server_TCP_IPV6(self):
         self.server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
@@ -25,7 +31,9 @@ class SocketServer:
 
         while True:
             self.connection, self.address = self.server.accept()
-            Thread(target=self.handler_server_clients, args=(self.connection, self.address)).start()
+
+            if self.server_client_connection_registrar(self.connection):
+                Thread(target=self.handler_server_clients, args=(self.connection, self.address)).start()
 
     def start_server_UDP_IPV4(self):
         self.server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -34,7 +42,9 @@ class SocketServer:
 
         while True:
             self.connection, self.address = self.server.accept()
-            Thread(target=self.handler_server_clients, args=(self.connection, self.address)).start()
+
+            if self.server_client_connection_registrar(self.connection):
+                Thread(target=self.handler_server_clients, args=(self.connection, self.address)).start()
 
     def start_server_UDP_IPV6(self):
         self.server = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
@@ -43,17 +53,38 @@ class SocketServer:
 
         while True:
             self.connection, self.address = self.server.accept()
-            Thread(target=self.handler_server_clients, args=(self.connection, self.address)).start()
 
+            if self.server_client_connection_registrar(self.connection):
+                Thread(target=self.handler_server_clients, args=(self.connection, self.address)).start()
+
+    def server_client_connection_registrar(self, connection):
+        try:
+            clientUserName: str = loads(connection.recv(4096))['UserName']
+            if not clientUserName:
+                raise EOFError
+
+            with self.lock:
+                self.clients[clientUserName] = connection
+            print(self.clients)
+            return True
+        except EOFError:
+            connection.close()
+            return False
+
+    # TODO => Fix bug
     def handler_server_clients(self, connection, address):
+        print("H->"*80)
         deserializingData = b''
         while True:
             serializedClientData = connection.recv(4096)
+            print(serializedClientData)
+            print("Test")
 
             if not serializedClientData:
                 break
 
             deserializingData += serializedClientData
+            print('Test2')
 
             try:
                 deserializedClientData = loads(deserializingData)
