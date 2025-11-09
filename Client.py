@@ -1,5 +1,7 @@
 import socket
-from pickle import dumps
+import time
+from threading import Thread
+from pickle import dumps, loads
 
 import os
 
@@ -49,6 +51,7 @@ class SocketClient:
         self.client.send(dumps({
             'UserName': self.userName
         }))
+        # self.client.close()
 
     def send_message(self, toUser, message: any):
         self.clientData['To'] = toUser
@@ -56,6 +59,7 @@ class SocketClient:
         self.clientData['Message'] = message
 
         self.client.send(dumps(self.clientData))
+        print("Message sended")
         self.client.close()
 
     def send_file(self, toUser, fileName, message=''):
@@ -85,7 +89,28 @@ class SocketClient:
 
         self.client.close()
 
-TestClient = SocketClient('TwoUSER_Farhan')
-TestClient.server_communicate_TCP_IPV4()
-TestClient.send_message(message="Hi how are you", toUser='Python_Programmer')
+    def start_message_receiving(self):
+        receiverThread = Thread(target=self.message_receiver, daemon=True)
+        receiverThread.start()
+        receiverThread.join()
+
+    def message_receiver(self):
+        while True:
+            try:
+                serializedData = self.client.recv(4096)
+
+                if not serializedData:
+                    break
+
+                deserializedData = loads(serializedData)
+                print(deserializedData)
+
+            except Exception as error:
+                print("Error: ", error)
+                break
+        self.client.close()
+
+# TestClient = SocketClient('TwoUSER_Farhan')
+# TestClient.server_communicate_TCP_IPV4()
+# TestClient.send_message(message="Hi how are you", toUser='Python_Programmer')
 

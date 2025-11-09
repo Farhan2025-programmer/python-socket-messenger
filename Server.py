@@ -2,7 +2,7 @@ import socket
 import threading
 from threading import Thread
 
-from pickle import loads
+from pickle import loads, dumps
 
 class SocketServer:
 
@@ -20,9 +20,7 @@ class SocketServer:
 
         while True:
             self.connection, self.address = self.server.accept()
-
-            if self.server_client_connection_registrar(self.connection):
-                Thread(target=self.handler_server_clients, args=(self.connection, self.address)).start()
+            Thread(target=self.handler_server_clients, args=(self.connection, self.address)).start()
 
     def start_server_TCP_IPV6(self):
         self.server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
@@ -71,34 +69,31 @@ class SocketServer:
             connection.close()
             return False
 
-    # TODO => Fix bug
     def handler_server_clients(self, connection, address):
-        print("H->"*80)
-        deserializingData = b''
         while True:
-            serializedClientData = connection.recv(4096)
-            print(serializedClientData)
-            print("Test")
-
-            if not serializedClientData:
-                break
-
-            deserializingData += serializedClientData
-            print('Test2')
-
             try:
-                deserializedClientData = loads(deserializingData)
+                serializedClientData = connection.recv(4096)
+
+                if not serializedClientData:
+                    break
+
+                deserializedClientData = loads(serializedClientData)
+
+                self.clients[deserializedClientData.get('UserName')] = connection
+                print(self.clients)
 
                 if deserializedClientData.get('HaveFile'):
-                    self.get_clients_files(self.connection, deserializedClientData.get('FileName'),
+                    self.get_clients_files(connection, deserializedClientData.get('FileName'),
                                            deserializedClientData.get('FileSize'))
 
                 print(deserializedClientData)
+                if not deserializedClientData.get('UserName'):
+                    self.clients[deserializedClientData.get('To')].send(dumps(deserializedClientData.get('Message')))
 
-                connection.close()
-                return deserializedClientData
-            except EOFError:
-                continue
+            except Exception as error:
+                print("Error: ", error)
+                break
+        connection.close()
 
     def get_clients_files(self, connection, fileName, fileSize):
         connection.send('ok'.encode())

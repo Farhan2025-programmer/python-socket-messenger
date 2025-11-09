@@ -1,5 +1,10 @@
-from Client import SocketClient
+import time
 
-TestClient = SocketClient(userName='Python_Programmer')
+from Client import SocketClient
+from threading import Thread
+
+TestClient = SocketClient('Python_Programmer')
 TestClient.server_communicate_TCP_IPV4()
-TestClient.send_message('Python_Programmer', "Hi How are you...")
+time.sleep(1)
+TestClient.start_message_receiving()
+# Thread(target=SocketClient.message_receiver, args=(TestClient, ), daemon=True).start()
