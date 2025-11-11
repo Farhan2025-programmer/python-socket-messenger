@@ -29,6 +29,10 @@ class SocketClient:
 
         self.user_name_sender_to_server()
 
+        # TODO => ( select a better way ) =>
+        Thread(target=self.message_receiver, daemon=True).start()
+        self.send_message()
+
     def server_communicate_TCP_IPV6(self):
         self.client = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
         self.client.connect((self.serverIpAddress, self.serverSocketPortNumber))
@@ -53,14 +57,21 @@ class SocketClient:
         }))
         # self.client.close()
 
-    def send_message(self, toUser, message: any):
-        self.clientData['To'] = toUser
-        self.clientData['HaveFile'] = False
-        self.clientData['Message'] = message
+    def start_message_sending(self):
+        senderThread = Thread(target=self.send_message, daemon=True)
+        senderThread.start()
+        senderThread.join()
 
-        self.client.send(dumps(self.clientData))
-        print("Message sended")
-        self.client.close()
+    def send_message(self):
+        self.clientData['HaveFile'] = False
+
+        while True:
+            self.clientData['To'] = input("Witch user do you want to send message: ")
+            self.clientData['Message'] = input("Enter your message: ")
+            if self.clientData['Message'] == 'Q':
+                self.client.close()
+            self.client.send(dumps(self.clientData))
+            print("Message sended")
 
     def send_file(self, toUser, fileName, message=''):
         with open(fileName, 'rb') as file:
@@ -103,7 +114,7 @@ class SocketClient:
                     break
 
                 deserializedData = loads(serializedData)
-                print(deserializedData)
+                print(str(deserializedData.get('From')) + ': ', deserializedData.get('Message'))
 
             except Exception as error:
                 print("Error: ", error)

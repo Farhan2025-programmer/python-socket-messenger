@@ -88,7 +88,7 @@ class SocketServer:
 
                 print(deserializedClientData)
                 if not deserializedClientData.get('UserName'):
-                    self.clients[deserializedClientData.get('To')].send(dumps(deserializedClientData.get('Message')))
+                    self.clients[deserializedClientData.get('To')].send(dumps(deserializedClientData))
 
             except Exception as error:
                 print("Error: ", error)
