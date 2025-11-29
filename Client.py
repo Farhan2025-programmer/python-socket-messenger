@@ -114,6 +114,7 @@ class SocketClient:
                     break
 
                 deserializedData = loads(serializedData)
+                print()
                 print(str(deserializedData.get('From')) + ': ', deserializedData.get('Message'))
 
             except Exception as error:
